@@ -1,0 +1,47 @@
+configfile: 'config.yaml'
+chr = config['chr']
+
+
+# ONE TO RULE THEM ALL
+rule all:
+    input:
+        expand('out/s3_DP/{chr}.long.carriers.vaf.dp.tsv', chr = chr)
+
+
+rule s1_space_2_tab:
+    input:
+        carriers = '/storage/scratch01/users/amaqueda/5_keep_info/out/s9_joined/{chr}.long.carriers.tsv'
+    output:
+        carriers_tab = temp('out/s1_tabbed/{chr}.long.carriers.tab.tsv')
+    resources:
+        mem_mb = 25600,
+        walltime = 120
+    shell:
+        "cat {input.carriers} | tr -s ' ' | tr ' ' '\t' > {output.carriers_tab}"
+
+
+rule s2_compute_vaf:
+    input:
+        tab = 'out/s1_tabbed/{chr}.long.carriers.tab.tsv'
+    output:
+        vaf =temp('out/s2_vaf/{chr}.long.carriers.vaf.tsv')
+    resources:
+        mem_mb = 51200,
+        walltime = 180
+    script:
+        'vaf_calculator.py'
+
+
+rule s3_fill_DP:
+    input:
+        vaf = 'out/s2_vaf/{chr}.long.carriers.vaf.tsv'
+    output:
+        dp = 'out/s3_DP/{chr}.long.carriers.vaf.dp.tsv'
+    resources:
+        mem_mb = 51200,
+        walltime = 120
+    script:
+        'dp_filler.py'
+
+
+# snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 25 -n

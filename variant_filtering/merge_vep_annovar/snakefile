@@ -1,0 +1,28 @@
+configfile: "config.yml"
+
+
+# Parameters
+chr = config["chr"]
+vep_files = config["vep_files"]
+anno_files = config["annovar_files"]
+
+
+# ONE TO RULE THEM ALL
+rule all:
+    input:
+        expand('out/{chr}.multiallelic.LowQual.anno_vep_annotated.tsv.gz', chr = chr)
+
+
+rule s1_merge_annovar_vep_files:
+    input:
+        anno = '{anno_files}/{chr}_final.pass.noinfo.fix.split.miss2ref.sorted.multiallelic.LowQual.annovar_annotated.hg19_multianno.srt.tsv',
+        vep = '{vep_files}/{chr}.multiallelic.LowQual.vep_annotated_withspliceai.tsv'
+    output:
+        output = 'out/{chr}.multiallelic.LowQual.anno_vep_annotated.tsv.gz'
+    resources:
+        mem_mb = 51200,
+        walltime = 180
+    script:
+        f'1_merge_ve_anno_files.py'
+
+# snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 20 -n

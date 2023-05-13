@@ -1,0 +1,38 @@
+configfile: 'config.yaml'
+chr = config['chr']
+
+
+# ONE TO RULE THEM ALL
+rule all:
+    input:
+        expand('out/{chr}.multiallelic.LowQual.anno_vep.canonical.ensembl.tsv.gz', chr = chr),
+        expand('out/tables/{chr}.count.tsv', chr = chr),
+        expand('out/canonical_YES.ensembl_cons.frequency.tsv')
+
+
+rule s1_filter_variants:
+    input:
+        annotation = '/storage/scratch01/users/jaejlee/010.MERGE_VEP_ANNO/out/{chr}.multiallelic.LowQual.anno_vep_annotated.tsv.gz'
+    output:
+        result = 'out/{chr}.multiallelic.LowQual.anno_vep.canonical.ensembl.tsv.gz',
+        table = 'out/tables/{chr}.count.tsv'
+    resources:
+        mem_mb = 75000,
+        walltime = 240
+    script:
+        'filter.py'
+
+
+rule s2_combine_counts:
+    input:
+        tables = expand('out/tables/{chr}.count.tsv', chr = chr)
+    output:
+        combined = 'out/canonical_YES.ensembl_cons.frequency.tsv'
+    resources:
+        mem_mb = 10240,
+        walltime = 30
+    script:
+        'table_maker.py'
+
+
+# snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 25 -n

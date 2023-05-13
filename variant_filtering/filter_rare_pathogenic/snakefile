@@ -1,0 +1,36 @@
+configfile: 'config.yaml'
+chr = config['chr']
+
+
+rule all:
+    input:
+        'out/TCGA_annotated_MetaLR.tsv.gz',
+        # 'out/TCGA_0.01_gnomAD_0.001_patho.tsv.gz'
+
+
+rule s1_merge_symbol_AF:
+    input:
+        longfile = '/storage/scratch01/users/amaqueda/TEST_PATATA/TCGA_AF.tsv',
+        annotation = expand('/storage/scratch01/users/jaejlee/010.REF_VS_ENSBL/002.ENS/out2/s0_filter_var/{chr}.multiallelic.LowQual.anno_vep.canonical.ensembl.tsv.gz',chr=chr)
+    output:
+        DATAS = 'out/TCGA_annotated_MetaLR.tsv.gz'
+    resources:
+        mem_mb = 358400,
+        walltime = 300
+    script:
+        'scripts/s1_ID_extract_AF_function.py'
+
+
+rule s2_filter_freq_patho:
+    input:
+        annot = 'out/TCGA_annotated_MetaLR.tsv.gz'
+    output:
+        filters = 'out/TCGA_0.01_gnomAD_0.001_patho.tsv.gz'
+    resources:
+        mem_mb = 262144,
+        walltime = 120
+    script:
+        'scripts/s2_filter_freq_pathogenic.py'
+
+
+# snakemake --use-conda --profile $SMK_PROFILE_SLURM -j 25
